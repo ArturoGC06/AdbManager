@@ -18,7 +18,7 @@ public class AdbService implements AdbModel {
     }
 
     @Override
-    public void refreshDevices() throws Exception {
+    public void refreshDevices() throws Exception { // 
         AdbResult res = client.run(List.of("devices", "-l"));
         if (!res.ok()) throw new Exception("adb devices -l failed:\n" + res.output());
         devices = parser.parseDevices(res.output());

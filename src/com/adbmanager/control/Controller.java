@@ -1,7 +1,9 @@
 package com.adbmanager.control;
 
 import java.io.IOException;
+import java.util.List;
 
+import com.adbmanager.logic.model.Device;
 import com.adbmanager.control.commands.Command;
 import com.adbmanager.control.commands.CommandGenerator;
 import com.adbmanager.exceptions.CommandException;
@@ -23,6 +25,27 @@ public class Controller {
 
         while (running) {
             try {
+            	model.refreshDevices();
+            	List<Device> deviceList = model.getDevices();
+            	
+            	// 2) Construye un texto “bonito”
+            	StringBuilder sb = new StringBuilder();
+            	sb.append("Dispositivos conectados: ").append(deviceList.size()).append("\n");
+
+            	for (int i = 0; i < deviceList.size(); i++) {
+            	    Device d = deviceList.get(i);
+            	    String shownModel = (d.model() != null) ? d.model() : "(sin model)";
+            	    sb.append(i).append(") ")
+            	      .append(shownModel)
+            	      .append("  [").append(d.state()).append("]  ")
+            	      .append(d.serial())
+            	      .append("\n");
+            	}
+            	
+            	
+
+            	view.show(sb.toString());
+            	
                 view.showPrompt();
                 String line = view.readLine();
                 if (line == null) break; // EOF
@@ -51,6 +74,9 @@ public class Controller {
 
             } catch (IOException e) {
                 view.showError("Error leyendo de consola: " + e.getMessage());
+                running = false;
+            } catch (Exception e) { // excepcion generica del refresh TODO especificarla
+                view.showError("Error al ejecutar el comando: " + e.getMessage());
                 running = false;
             }
         }
