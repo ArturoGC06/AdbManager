@@ -9,6 +9,7 @@ import com.adbmanager.control.commands.CommandGenerator;
 import com.adbmanager.exceptions.CommandException;
 import com.adbmanager.logic.AdbModel;
 import com.adbmanager.view.ConsoleView;
+import com.adbmanager.view.Messages;
 
 public class Controller {
 
@@ -22,24 +23,27 @@ public class Controller {
 
     public void run() {
         boolean running = true;
+        this.view.showWelcome();
 
         while (running) {
             try {
             	model.refreshDevices();
             	List<Device> deviceList = model.getDevices();
             	
-            	// 2) Construye un texto “bonito”
-            	StringBuilder sb = new StringBuilder();
+            	StringBuilder sb = new StringBuilder(); //StringBuilder donde metemos la salida de los dispositivos
             	sb.append("Dispositivos conectados: ").append(deviceList.size()).append("\n");
-
+            	
             	for (int i = 0; i < deviceList.size(); i++) {
             	    Device d = deviceList.get(i);
-            	    String shownModel = (d.model() != null) ? d.model() : "(sin model)";
-            	    sb.append(i).append(") ")
-            	      .append(shownModel)
-            	      .append("  [").append(d.state()).append("]  ")
+            	    sb.append(i+1).append(") ")
             	      .append(d.serial())
-            	      .append("\n");
+            	      .append(": ").append(d.state()).append("\n");
+            	      if(d.state().equals(Messages.STATUS_CONNECTED)) {
+            	    	  sb.append("\t").append(Messages.MODEL).append(": ").append(d.model()).append("\n")
+                	      .append("\t").append(Messages.CODENAME).append(": ").append(d.device()).append("\n");
+            	      } else {
+            	    	  sb.append("\t").append(Messages.ERROR_NOT_CONECTED).append("\n");
+            	      }
             	}
             	
             	

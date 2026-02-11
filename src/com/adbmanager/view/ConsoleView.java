@@ -8,8 +8,13 @@ public class ConsoleView {
 
     private final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
+
     public void showPrompt() {
         System.out.print("ADB Manager> ");
+    }
+    
+    public void showWelcome() {
+    	System.out.println(Messages.APP_NAME + " " + Messages.VERSION + "\n");
     }
 
     public String readLine() throws IOException {

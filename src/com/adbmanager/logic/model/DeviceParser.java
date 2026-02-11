@@ -33,7 +33,7 @@ public class DeviceParser {
 					    }*/
 
 //				    if (!deviceAdded) { comprobacion inútil de momento pues se hace una lista nueva cada vez
-				    	if(state.equals(Messages.CONNECTED)) {
+				    	if(state.equals(Messages.STATUS_CONNECTED)) {
 				    		String product = deviceInfo[2].split(":")[1];
 				    		String model = deviceInfo[3].split(":")[1];
 				    		String device = deviceInfo[4].split(":")[1];
