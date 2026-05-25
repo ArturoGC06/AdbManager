@@ -48,12 +48,12 @@ jobs:
           body: |
             ## ADB Manager ${{ github.ref_name }}
 
-            Prerelease centrada en pequeños ajustes de interfaz y actualización incremental desde la versión anterior.
+            Prerelease centrada en la pestaña Control y en nuevos ajustes de rotación del dispositivo.
 
-            - Ajustes: al abrir la pestaña se vuelve siempre al inicio.
-            - Pantalla: botones de aplicar/restablecer recolocados junto a los campos manuales.
-            - Mirroring: textos y aviso de scrcpy más claros, con opción de descarga visible.
-            - Conexión inalámbrica: espaciado horizontal refinado en el asistente.
+            - Control: nuevo ajuste de rotación automática mediante ADB.
+            - Control: bloqueo manual de orientación en vertical, horizontal derecha, vertical invertida y horizontal izquierda.
+            - Control: la rotación automática usa un toggle visual coherente con el modo oscuro.
+            - Control: los modos manuales usan iconos descriptivos, con estado deshabilitado más claro cuando la rotación automática está activa.
 
             Incluye instalador MSI para Windows x64 compatible con la actualización desde versiones anteriores.
           files: release-*/ADB-Manager-*-windows-x64.msi
