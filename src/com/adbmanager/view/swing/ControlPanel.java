@@ -1,7 +1,9 @@
 package com.adbmanager.view.swing;
 
 import java.awt.BorderLayout;
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -12,6 +14,9 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -25,7 +30,9 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -40,6 +47,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 
 import com.adbmanager.logic.model.ControlState;
+import com.adbmanager.logic.model.DeviceRotationMode;
 import com.adbmanager.logic.model.DeviceSoundMode;
 import com.adbmanager.view.Messages;
 
@@ -78,6 +86,15 @@ public class ControlPanel extends JPanel {
     private final JToggleButton soundSilentButton = new JToggleButton();
     private final ButtonGroup soundModeGroup = new ButtonGroup();
 
+    private final JPanel rotationPanel = new JPanel();
+    private final JLabel rotationLabel = new JLabel();
+    private final JCheckBox rotationAutoToggle = new JCheckBox();
+    private final JToggleButton rotationPortraitButton = new JToggleButton();
+    private final JToggleButton rotationLandscapeRightButton = new JToggleButton();
+    private final JToggleButton rotationPortraitInvertedButton = new JToggleButton();
+    private final JToggleButton rotationLandscapeLeftButton = new JToggleButton();
+    private final ButtonGroup rotationModeGroup = new ButtonGroup();
+
     private final JPanel textInputPanel = new JPanel();
     private final PlaceholderTextField textInputField = new PlaceholderTextField();
     private final JButton sendTextButton = new JButton();
@@ -105,6 +122,7 @@ public class ControlPanel extends JPanel {
     private final List<JButton> actionButtons = new ArrayList<>();
     private final Set<JButton> primaryButtons = new HashSet<>();
     private final List<JToggleButton> soundModeButtons = new ArrayList<>();
+    private final List<JToggleButton> rotationModeButtons = new ArrayList<>();
     private final Map<JButton, ToolbarIcon.Type> buttonIcons = new HashMap<>();
 
     private AppTheme theme = AppTheme.LIGHT;
@@ -120,6 +138,8 @@ public class ControlPanel extends JPanel {
     private ActionListener volumeCommitAction = event -> {
     };
     private ActionListener soundModeAction = event -> {
+    };
+    private ActionListener rotationModeAction = event -> {
     };
 
     public ControlPanel() {
@@ -184,6 +204,11 @@ public class ControlPanel extends JPanel {
         } : actionListener;
     }
 
+    public void setApplyRotationModeAction(ActionListener actionListener) {
+        rotationModeAction = actionListener == null ? event -> {
+        } : actionListener;
+    }
+
     public void setTapAction(ActionListener actionListener) {
         // Removed from UI on purpose.
     }
@@ -223,6 +248,25 @@ public class ControlPanel extends JPanel {
             return DeviceSoundMode.SILENT;
         }
         return DeviceSoundMode.NORMAL;
+    }
+
+    public DeviceRotationMode getSelectedRotationMode() {
+        if (rotationAutoToggle.isSelected()) {
+            return DeviceRotationMode.AUTO;
+        }
+        if (rotationPortraitButton.isSelected()) {
+            return DeviceRotationMode.PORTRAIT;
+        }
+        if (rotationLandscapeRightButton.isSelected()) {
+            return DeviceRotationMode.LANDSCAPE_RIGHT;
+        }
+        if (rotationPortraitInvertedButton.isSelected()) {
+            return DeviceRotationMode.PORTRAIT_INVERTED;
+        }
+        if (rotationLandscapeLeftButton.isSelected()) {
+            return DeviceRotationMode.LANDSCAPE_LEFT;
+        }
+        return DeviceRotationMode.PORTRAIT;
     }
 
     public Integer getTapX() {
@@ -295,6 +339,20 @@ public class ControlPanel extends JPanel {
             } else {
                 soundNormalButton.setSelected(true);
             }
+
+            DeviceRotationMode rotationMode = currentState.rotationMode();
+            rotationAutoToggle.setSelected(rotationMode == DeviceRotationMode.AUTO);
+            if (rotationMode == DeviceRotationMode.PORTRAIT) {
+                rotationPortraitButton.setSelected(true);
+            } else if (rotationMode == DeviceRotationMode.LANDSCAPE_RIGHT) {
+                rotationLandscapeRightButton.setSelected(true);
+            } else if (rotationMode == DeviceRotationMode.PORTRAIT_INVERTED) {
+                rotationPortraitInvertedButton.setSelected(true);
+            } else if (rotationMode == DeviceRotationMode.LANDSCAPE_LEFT) {
+                rotationLandscapeLeftButton.setSelected(true);
+            } else {
+                rotationPortraitButton.setSelected(true);
+            }
         } finally {
             syncingControlState = false;
         }
@@ -304,6 +362,8 @@ public class ControlPanel extends JPanel {
         updateBrightnessLabel();
         updateVolumeLabel();
         styleSoundModeButtons();
+        styleRotationAutoToggle();
+        styleRotationModeButtons();
     }
 
     public void clearControlState() {
@@ -318,6 +378,7 @@ public class ControlPanel extends JPanel {
         quickActionsPanel.setBorder(createSectionBorder(Messages.text("control.quick.title")));
         mediaPanel.setBorder(createSectionBorder(Messages.text("control.media.title")));
         soundModePanel.setBorder(createSectionBorder(Messages.text("control.sound.title")));
+        rotationPanel.setBorder(createSectionBorder(Messages.text("control.rotation.title")));
         textInputPanel.setBorder(createSectionBorder(Messages.text("control.text.title")));
         tvRemotePanel.setBorder(createSectionBorder(Messages.text("control.tv.title")));
 
@@ -342,6 +403,14 @@ public class ControlPanel extends JPanel {
         soundNormalButton.setText(Messages.text(DeviceSoundMode.NORMAL.messageKey()));
         soundVibrateButton.setText(Messages.text(DeviceSoundMode.VIBRATE.messageKey()));
         soundSilentButton.setText(Messages.text(DeviceSoundMode.SILENT.messageKey()));
+
+        rotationLabel.setText(Messages.text("control.rotation.mode"));
+        rotationAutoToggle.setText("");
+        rotationAutoToggle.setToolTipText(Messages.text(DeviceRotationMode.AUTO.messageKey()));
+        rotationPortraitButton.setToolTipText(Messages.text(DeviceRotationMode.PORTRAIT.messageKey()));
+        rotationLandscapeRightButton.setToolTipText(Messages.text(DeviceRotationMode.LANDSCAPE_RIGHT.messageKey()));
+        rotationPortraitInvertedButton.setToolTipText(Messages.text(DeviceRotationMode.PORTRAIT_INVERTED.messageKey()));
+        rotationLandscapeLeftButton.setToolTipText(Messages.text(DeviceRotationMode.LANDSCAPE_LEFT.messageKey()));
 
         tvUpButton.setText(Messages.text("control.tv.up"));
         tvLeftButton.setText(Messages.text("control.tv.left"));
@@ -389,12 +458,14 @@ public class ControlPanel extends JPanel {
         styleSection(quickActionsPanel, Messages.text("control.quick.title"));
         styleSection(mediaPanel, Messages.text("control.media.title"));
         styleSection(soundModePanel, Messages.text("control.sound.title"));
+        styleSection(rotationPanel, Messages.text("control.rotation.title"));
         styleSection(textInputPanel, Messages.text("control.text.title"));
         styleSection(tvRemotePanel, Messages.text("control.tv.title"));
 
         styleFormLabel(brightnessLabel);
         styleFormLabel(volumeLabel);
         styleFormLabel(soundModeLabel);
+        styleFormLabel(rotationLabel);
 
         brightnessValueLabel.setForeground(theme.textPrimary());
         brightnessValueLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
@@ -409,6 +480,8 @@ public class ControlPanel extends JPanel {
             styleActionButton(button, primaryButtons.contains(button));
         }
         styleSoundModeButtons();
+        styleRotationAutoToggle();
+        styleRotationModeButtons();
         styleStatusLabel();
         repaint();
     }
@@ -434,15 +507,17 @@ public class ControlPanel extends JPanel {
         buildQuickActionsPanel();
         buildMediaPanel();
         buildSoundModePanel();
+        buildRotationPanel();
         buildTextInputPanel();
         buildTvRemotePanel();
 
         JPanel leftColumn = new JPanel(new GridBagLayout());
         leftColumn.setOpaque(false);
-        addColumnPanel(leftColumn, quickActionsPanel, 0, 0.28d, new Insets(0, 0, 12, 0));
-        addColumnPanel(leftColumn, mediaPanel, 1, 0.30d, new Insets(0, 0, 12, 0));
-        addColumnPanel(leftColumn, soundModePanel, 2, 0.20d, new Insets(0, 0, 12, 0));
-        addColumnPanel(leftColumn, textInputPanel, 3, 0.22d, new Insets(0, 0, 0, 0));
+        addColumnPanel(leftColumn, quickActionsPanel, 0, 0.24d, new Insets(0, 0, 12, 0));
+        addColumnPanel(leftColumn, mediaPanel, 1, 0.26d, new Insets(0, 0, 12, 0));
+        addColumnPanel(leftColumn, rotationPanel, 2, 0.24d, new Insets(0, 0, 12, 0));
+        addColumnPanel(leftColumn, soundModePanel, 3, 0.14d, new Insets(0, 0, 12, 0));
+        addColumnPanel(leftColumn, textInputPanel, 4, 0.12d, new Insets(0, 0, 0, 0));
 
         JPanel rightColumn = new JPanel(new GridBagLayout());
         rightColumn.setOpaque(false);
@@ -599,6 +674,34 @@ public class ControlPanel extends JPanel {
         soundModePanel.add(controlsPanel, BorderLayout.CENTER);
     }
 
+    private void buildRotationPanel() {
+        rotationPanel.setLayout(new BorderLayout(0, 10));
+        rotationPanel.setAlignmentX(LEFT_ALIGNMENT);
+        rotationPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 170));
+
+        JPanel toggleRow = new JPanel(new BorderLayout(10, 0));
+        toggleRow.setOpaque(false);
+        configureRotationAutoToggle();
+        toggleRow.add(rotationLabel, BorderLayout.WEST);
+        toggleRow.add(rotationAutoToggle, BorderLayout.EAST);
+
+        JPanel controlsPanel = new JPanel(new GridLayout(1, 4, 10, 0));
+        controlsPanel.setOpaque(false);
+
+        configureRotationButton(rotationPortraitButton, DeviceRotationMode.PORTRAIT);
+        configureRotationButton(rotationLandscapeRightButton, DeviceRotationMode.LANDSCAPE_RIGHT);
+        configureRotationButton(rotationPortraitInvertedButton, DeviceRotationMode.PORTRAIT_INVERTED);
+        configureRotationButton(rotationLandscapeLeftButton, DeviceRotationMode.LANDSCAPE_LEFT);
+
+        controlsPanel.add(rotationPortraitButton);
+        controlsPanel.add(rotationLandscapeRightButton);
+        controlsPanel.add(rotationPortraitInvertedButton);
+        controlsPanel.add(rotationLandscapeLeftButton);
+
+        rotationPanel.add(toggleRow, BorderLayout.NORTH);
+        rotationPanel.add(controlsPanel, BorderLayout.CENTER);
+    }
+
     private void buildTextInputPanel() {
         textInputPanel.setLayout(new BorderLayout(10, 0));
         textInputPanel.setAlignmentX(LEFT_ALIGNMENT);
@@ -743,6 +846,10 @@ public class ControlPanel extends JPanel {
         for (JToggleButton button : soundModeButtons) {
             button.setEnabled(enabled);
         }
+        for (JToggleButton button : rotationModeButtons) {
+            button.setEnabled(enabled && !rotationAutoToggle.isSelected());
+        }
+        rotationAutoToggle.setEnabled(enabled);
 
         textInputField.setEnabled(enabled);
         styleTextField(textInputField);
@@ -752,6 +859,8 @@ public class ControlPanel extends JPanel {
         brightnessSlider.setEnabled(enabled);
         volumeSlider.setEnabled(enabled);
         styleSoundModeButtons();
+        styleRotationAutoToggle();
+        styleRotationModeButtons();
         styleSlider(brightnessSlider);
         styleSlider(volumeSlider);
     }
@@ -789,6 +898,39 @@ public class ControlPanel extends JPanel {
         });
         soundModeGroup.add(button);
         soundModeButtons.add(button);
+    }
+
+    private void configureRotationButton(JToggleButton button, DeviceRotationMode mode) {
+        button.setActionCommand(mode.name());
+        button.putClientProperty("rotationMode", mode);
+        button.setUI(new BasicToggleButtonUI());
+        button.setFocusPainted(false);
+        button.setFocusable(false);
+        button.setRolloverEnabled(true);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setFont(BASE_TEXT_FONT);
+        button.addActionListener(event -> {
+            rotationAutoToggle.setSelected(false);
+            styleRotationModeButtons();
+            if (!syncingControlState && button.isSelected()) {
+                rotationModeAction.actionPerformed(event);
+            }
+        });
+        rotationModeGroup.add(button);
+        rotationModeButtons.add(button);
+    }
+
+    private void configureRotationAutoToggle() {
+        rotationAutoToggle.setOpaque(false);
+        rotationAutoToggle.setFocusPainted(false);
+        rotationAutoToggle.setFocusable(false);
+        rotationAutoToggle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        rotationAutoToggle.addActionListener(event -> {
+            updateControlStates();
+            if (!syncingControlState) {
+                rotationModeAction.actionPerformed(event);
+            }
+        });
     }
 
     private void styleSection(JPanel panel, String title) {
@@ -872,6 +1014,32 @@ public class ControlPanel extends JPanel {
             if (hovered) {
                 background = ThemeUtils.blend(background, theme.selectionBackground(), selected ? 0.16d : 0.24d);
             }
+            if (!button.isEnabled()) {
+                background = ThemeUtils.blend(theme.surface(), theme.secondarySurface(), 0.45d);
+            }
+            button.setOpaque(true);
+            button.setBackground(background);
+            button.setForeground(button.isEnabled()
+                    ? (selected ? theme.actionForeground() : theme.textPrimary())
+                    : theme.textSecondary());
+            button.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(button.isEnabled()
+                            ? (selected ? background : theme.border())
+                            : theme.disabledBorder(), 1),
+                    BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        }
+    }
+
+    private void styleRotationModeButtons() {
+        for (JToggleButton button : rotationModeButtons) {
+            boolean selected = button.isSelected();
+            boolean hovered = button.getModel().isRollover() && button.isEnabled();
+            Color background = selected
+                    ? theme.actionBackground()
+                    : ThemeUtils.blend(theme.background(), theme.secondarySurface(), 0.84d);
+            if (hovered) {
+                background = ThemeUtils.blend(background, theme.selectionBackground(), selected ? 0.16d : 0.24d);
+            }
             button.setOpaque(true);
             button.setBackground(button.isEnabled() ? background : theme.surface());
             button.setForeground(button.isEnabled()
@@ -882,7 +1050,28 @@ public class ControlPanel extends JPanel {
                             ? (selected ? background : theme.border())
                             : theme.disabledBorder(), 1),
                     BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+            button.setText("");
+            button.setPreferredSize(new Dimension(54, 48));
+            Object mode = button.getClientProperty("rotationMode");
+            if (mode instanceof DeviceRotationMode rotationMode) {
+                Color iconColor = button.isEnabled()
+                        ? (selected ? theme.actionForeground() : theme.textPrimary())
+                        : theme.textSecondary();
+                button.setIcon(new RotationModeIcon(rotationMode, iconColor, 28, button.isEnabled()));
+                button.setDisabledIcon(new RotationModeIcon(rotationMode, iconColor, 28, false));
+            }
         }
+    }
+
+    private void styleRotationAutoToggle() {
+        rotationAutoToggle.setOpaque(false);
+        rotationAutoToggle.setContentAreaFilled(false);
+        rotationAutoToggle.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        rotationAutoToggle.setForeground(rotationAutoToggle.isEnabled() ? theme.textPrimary() : theme.textSecondary());
+        rotationAutoToggle.setIcon(new ToggleSwitchIcon(theme, false, rotationAutoToggle.isEnabled()));
+        rotationAutoToggle.setSelectedIcon(new ToggleSwitchIcon(theme, true, rotationAutoToggle.isEnabled()));
+        rotationAutoToggle.setDisabledIcon(new ToggleSwitchIcon(theme, false, false));
+        rotationAutoToggle.setDisabledSelectedIcon(new ToggleSwitchIcon(theme, true, false));
     }
 
     private void styleStatusLabel() {
@@ -907,6 +1096,68 @@ public class ControlPanel extends JPanel {
                 TitledBorder.TOP,
                 new Font(Font.SANS_SERIF, Font.BOLD, 18),
                 theme.textPrimary());
+    }
+
+    private static final class RotationModeIcon implements Icon {
+
+        private final DeviceRotationMode mode;
+        private final Color color;
+        private final int size;
+        private final boolean enabled;
+
+        RotationModeIcon(DeviceRotationMode mode, Color color, int size, boolean enabled) {
+            this.mode = mode;
+            this.color = enabled ? color : withAlpha(color, 115);
+            this.size = size;
+            this.enabled = enabled;
+        }
+
+        @Override
+        public void paintIcon(Component component, Graphics graphics, int x, int y) {
+            Graphics2D g2d = (Graphics2D) graphics.create();
+            try {
+                g2d.translate(x + size / 2.0d, y + size / 2.0d);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(color);
+                g2d.setStroke(new BasicStroke(enabled ? 1.9f : 1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+                double angle = switch (mode) {
+                    case LANDSCAPE_RIGHT -> Math.PI / 2d;
+                    case PORTRAIT_INVERTED -> Math.PI;
+                    case LANDSCAPE_LEFT -> -Math.PI / 2d;
+                    default -> 0d;
+                };
+                AffineTransform originalTransform = g2d.getTransform();
+                g2d.rotate(angle);
+
+                Shape phone = new RoundRectangle2D.Double(-8.5d, -12.5d, 17d, 25d, 4.5d, 4.5d);
+                g2d.draw(phone);
+                g2d.fillOval(-2, 7, 4, 4);
+                g2d.setTransform(originalTransform);
+
+                if (!enabled) {
+                    g2d.setColor(withAlpha(color, 150));
+                    g2d.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g2d.drawLine(-11, 11, 11, -11);
+                }
+            } finally {
+                g2d.dispose();
+            }
+        }
+
+        private static Color withAlpha(Color color, int alpha) {
+            return new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.max(0, Math.min(alpha, 255)));
+        }
+
+        @Override
+        public int getIconWidth() {
+            return size;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return size;
+        }
     }
 
     private static final class PlaceholderTextField extends JTextField {

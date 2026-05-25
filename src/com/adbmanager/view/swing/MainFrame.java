@@ -57,6 +57,7 @@ import com.adbmanager.logic.model.Device;
 import com.adbmanager.logic.model.DeviceDetails;
 import com.adbmanager.logic.model.DeviceFileEntry;
 import com.adbmanager.logic.model.DevicePowerAction;
+import com.adbmanager.logic.model.DeviceRotationMode;
 import com.adbmanager.logic.model.DeviceSoundMode;
 import com.adbmanager.logic.model.AdbToolInfo;
 import com.adbmanager.logic.model.AppDetails;
@@ -214,6 +215,10 @@ public class MainFrame extends JFrame {
 
     public void setControlSoundModeAction(ActionListener actionListener) {
         controlPanel.setApplySoundModeAction(actionListener);
+    }
+
+    public void setControlRotationModeAction(ActionListener actionListener) {
+        controlPanel.setApplyRotationModeAction(actionListener);
     }
 
     public void setControlTapAction(ActionListener actionListener) {
@@ -809,6 +814,10 @@ public class MainFrame extends JFrame {
 
     public DeviceSoundMode getControlSoundMode() {
         return controlPanel.getSelectedSoundMode();
+    }
+
+    public DeviceRotationMode getControlRotationMode() {
+        return controlPanel.getSelectedRotationMode();
     }
 
     public Integer getControlTapX() {

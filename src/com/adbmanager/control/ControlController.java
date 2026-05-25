@@ -6,6 +6,7 @@ import javax.swing.SwingWorker;
 
 import com.adbmanager.logic.model.ControlState;
 import com.adbmanager.logic.model.Device;
+import com.adbmanager.logic.model.DeviceRotationMode;
 import com.adbmanager.logic.model.DeviceSoundMode;
 import com.adbmanager.view.Messages;
 import com.adbmanager.view.swing.MainFrame;
@@ -128,6 +129,15 @@ final class ControlController {
                 Messages.format("control.status.soundModeApplied", Messages.text(soundMode.messageKey())),
                 true,
                 () -> model().setSelectedDeviceSoundMode(soundMode));
+    }
+
+    void applyRotationMode() {
+        DeviceRotationMode rotationMode = view().getControlRotationMode();
+        runControlCommand(
+                Messages.text("error.control.rotation"),
+                Messages.format("control.status.rotationApplied", Messages.text(rotationMode.messageKey())),
+                true,
+                () -> model().setSelectedDeviceRotationMode(rotationMode));
     }
 
     void applyTap() {

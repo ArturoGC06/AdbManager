@@ -5,7 +5,8 @@ public record ControlState(
         int brightnessMax,
         int mediaVolumeLevel,
         int mediaVolumeMax,
-        DeviceSoundMode soundMode) {
+        DeviceSoundMode soundMode,
+        DeviceRotationMode rotationMode) {
 
     public ControlState {
         brightnessMax = Math.max(1, brightnessMax);
@@ -13,9 +14,10 @@ public record ControlState(
         brightnessLevel = Math.max(0, Math.min(brightnessLevel, brightnessMax));
         mediaVolumeLevel = Math.max(0, Math.min(mediaVolumeLevel, mediaVolumeMax));
         soundMode = soundMode == null ? DeviceSoundMode.NORMAL : soundMode;
+        rotationMode = rotationMode == null ? DeviceRotationMode.AUTO : rotationMode;
     }
 
     public static ControlState empty() {
-        return new ControlState(0, 255, 0, 15, DeviceSoundMode.NORMAL);
+        return new ControlState(0, 255, 0, 15, DeviceSoundMode.NORMAL, DeviceRotationMode.AUTO);
     }
 }

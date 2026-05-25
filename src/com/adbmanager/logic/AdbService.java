@@ -71,6 +71,7 @@ import com.adbmanager.logic.model.DeviceDetailsParser;
 import com.adbmanager.logic.model.DeviceFileEntry;
 import com.adbmanager.logic.model.DevicePowerAction;
 import com.adbmanager.logic.model.DeviceParser;
+import com.adbmanager.logic.model.DeviceRotationMode;
 import com.adbmanager.logic.model.DeviceSoundMode;
 import com.adbmanager.logic.model.FileTransferProgress;
 import com.adbmanager.logic.model.InstalledApp;
@@ -565,6 +566,16 @@ public class AdbService implements AdbModel {
             return parseSoundModeFromNumeric(settingsOutput);
         }
         return DeviceSoundMode.NORMAL;
+    }
+
+    private DeviceRotationMode readRotationModeState(String serial) {
+        int accelerometerRotation = parseIntegerOrDefault(
+                runControlCommandLenient(serial, List.of("shell", "settings", "get", "system", "accelerometer_rotation")),
+                1);
+        int userRotation = parseIntegerOrDefault(
+                runControlCommandLenient(serial, List.of("shell", "settings", "get", "system", "user_rotation")),
+                0);
+        return DeviceRotationMode.fromAdbValues(accelerometerRotation, userRotation);
     }
 
     private String encodeInputText(String text) {
@@ -1233,8 +1244,9 @@ public class AdbService implements AdbModel {
 
         int[] volume = readMediaVolumeState(serial);
         DeviceSoundMode soundMode = readSoundModeState(serial);
+        DeviceRotationMode rotationMode = readRotationModeState(serial);
 
-        return Optional.of(new ControlState(brightness, 255, volume[0], volume[1], soundMode));
+        return Optional.of(new ControlState(brightness, 255, volume[0], volume[1], soundMode, rotationMode));
     }
 
     @Override
@@ -1368,6 +1380,36 @@ public class AdbService implements AdbModel {
                 List.of("shell", "settings", "put", "global", "mode_ringer", String.valueOf(numericMode)));
         assertOk(settingsResult,
                 "adb -s " + serial + " shell settings put global mode_ringer " + numericMode);
+    }
+
+    @Override
+    public void setSelectedDeviceRotationMode(DeviceRotationMode mode) throws Exception {
+        Device device = requireConnectedSelectedDevice(
+                Messages.text("error.control.deviceRequired"),
+                Messages.text("error.control.deviceDisconnected"));
+        DeviceRotationMode safeMode = mode == null ? DeviceRotationMode.AUTO : mode;
+        String serial = device.serial();
+
+        if (safeMode.automatic()) {
+            AdbResult automaticResult = client.runForSerial(
+                    serial,
+                    List.of("shell", "settings", "put", "system", "accelerometer_rotation", "1"));
+            assertOk(automaticResult,
+                    "adb -s " + serial + " shell settings put system accelerometer_rotation 1");
+            return;
+        }
+
+        AdbResult lockResult = client.runForSerial(
+                serial,
+                List.of("shell", "settings", "put", "system", "accelerometer_rotation", "0"));
+        assertOk(lockResult,
+                "adb -s " + serial + " shell settings put system accelerometer_rotation 0");
+
+        AdbResult rotationResult = client.runForSerial(
+                serial,
+                List.of("shell", "settings", "put", "system", "user_rotation", String.valueOf(safeMode.adbValue())));
+        assertOk(rotationResult,
+                "adb -s " + serial + " shell settings put system user_rotation " + safeMode.adbValue());
     }
 
     @Override

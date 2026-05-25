@@ -128,6 +128,7 @@ public class SwingController {
         view().setControlBrightnessAction(event -> controlController.applyBrightness());
         view().setControlVolumeAction(event -> controlController.applyVolume());
         view().setControlSoundModeAction(event -> controlController.applySoundMode());
+        view().setControlRotationModeAction(event -> controlController.applyRotationMode());
         view().setControlTapAction(event -> controlController.applyTap());
         view().setControlSwipeAction(event -> controlController.applySwipe());
         view().setControlKeyEventAction(event -> controlController.applyManualKeyEvent());

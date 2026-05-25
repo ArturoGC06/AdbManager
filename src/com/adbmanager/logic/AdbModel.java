@@ -14,6 +14,7 @@ import com.adbmanager.logic.model.Device;
 import com.adbmanager.logic.model.DeviceDirectoryListing;
 import com.adbmanager.logic.model.DeviceDetails;
 import com.adbmanager.logic.model.DevicePowerAction;
+import com.adbmanager.logic.model.DeviceRotationMode;
 import com.adbmanager.logic.model.DeviceSoundMode;
 import com.adbmanager.logic.model.FileTransferProgress;
 import com.adbmanager.logic.model.InstalledApp;
@@ -51,6 +52,7 @@ public interface AdbModel {
     void setSelectedDeviceBrightness(int brightness) throws Exception;
     void setSelectedDeviceMediaVolume(int volume) throws Exception;
     void setSelectedDeviceSoundMode(DeviceSoundMode mode) throws Exception;
+    void setSelectedDeviceRotationMode(DeviceRotationMode mode) throws Exception;
     void sendSelectedDeviceKeyEvent(String keyEvent) throws Exception;
     void tapSelectedDevice(int x, int y) throws Exception;
     void swipeSelectedDevice(int x1, int y1, int x2, int y2, int durationMs) throws Exception;
